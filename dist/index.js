@@ -6,9 +6,9 @@ import { handlerReadiness } from "./api/readiness.js";
 import { handlerMetrics } from "./api/metrics.js";
 import { handlerReset } from "./api/reset.js";
 import { errorMiddleWare, middlewareLogResponse, middlewareMetricsInc, } from "./middleware.js";
-import { handlerValidateChirp } from "./api/validate_chirp.js";
 import { config } from "./config.js";
 import { createUser } from "./db/queries/users.js";
+import { createChirp } from "./db/queries/chirps.js";
 const migrationClient = postgres(config.db.url, { max: 1 });
 await migrate(drizzle(migrationClient), config.db.migrationConfig);
 const app = express();
@@ -24,15 +24,19 @@ app.get("/admin/metrics", (req, res, next) => {
 app.post("/admin/reset", (req, res, next) => {
     Promise.resolve(handlerReset(req, res)).catch(next);
 });
-app.post("/api/validate_chirp", (req, res, next) => {
-    Promise.resolve(handlerValidateChirp(req, res)).catch(next);
-});
 app.post("/api/users", (req, res, next) => {
     Promise.resolve(createUser({ email: req.body.email }))
         .then((newUser) => {
         res.status(201).send(newUser);
     })
         .catch(next);
+});
+app.post("/api/chirps", (req, res, next) => {
+    Promise.resolve(createChirp({ body: req.body.body, userId: req.body.userId })
+        .then((newChirp) => {
+        res.status(201).send(newChirp);
+    })
+        .catch(next));
 });
 app.use(errorMiddleWare);
 app.listen(config.api.port, () => {
