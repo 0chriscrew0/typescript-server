@@ -1,7 +1,11 @@
 import express from "express";
 
 import { handlerReadiness } from "./api/readiness.js";
-import { middlewareLogResponses, middlewareMetricsInc } from "./middleware.js";
+import {
+  middlewareErrorHandler,
+  middlewareLogResponses,
+  middlewareMetricsInc,
+} from "./middleware.js";
 import { handlerMetrics } from "./api/metrics.js";
 import { handlerReset } from "./api/reset.js";
 import { handlerValidateChirp } from "./api/validate_chirp.js";
@@ -13,10 +17,36 @@ app.use("/app", middlewareMetricsInc, express.static("./src/app"));
 app.use(middlewareLogResponses);
 app.use(express.json());
 
-app.get("/api/healthz", handlerReadiness);
-app.get("/admin/metrics", handlerMetrics);
-app.post("/admin/reset", handlerReset);
-app.post("/api/validate_chirp", handlerValidateChirp);
+app.get("/api/healthz", async (req, res, next) => {
+  try {
+    await handlerReadiness(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+app.get("/admin/metrics", async (req, res, next) => {
+  try {
+    await handlerMetrics(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+app.post("/admin/reset", async (req, res, next) => {
+  try {
+    await handlerReset(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+app.post("/api/validate_chirp", async (req, res, next) => {
+  try {
+    await handlerValidateChirp(req, res);
+  } catch (err) {
+    next(err);
+  }
+});
+
+app.use(middlewareErrorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server is running at http://localhost:${PORT}`);
