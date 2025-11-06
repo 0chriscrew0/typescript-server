@@ -1,43 +1,43 @@
-import { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction } from "express";
 import { config } from "./config.js";
+import { respondWithError } from "./api/json.js";
 import {
   BadRequestError,
-  ForbiddenError,
   NotFoundError,
+  ForbiddenError,
   UnauthorizedError,
 } from "./api/errors.js";
 
-export async function middlewareLogResponses(
+export function middlewareLogResponse(
   req: Request,
   res: Response,
   next: NextFunction
 ) {
   res.on("finish", () => {
-    if (res.statusCode < 200 || res.statusCode >= 300) {
-      console.log(
-        `[NON-OK] ${req.method} ${req.url} - Status: ${res.statusCode}`
-      );
+    const statusCode = res.statusCode;
+
+    if (statusCode >= 300) {
+      console.log(`[NON-OK] ${req.method} ${req.url} - Status: ${statusCode}`);
     }
   });
 
   next();
 }
 
-export async function middlewareMetricsInc(
-  req: Request,
-  res: Response,
+export function middlewareMetricsInc(
+  _: Request,
+  __: Response,
   next: NextFunction
 ) {
-  config.fileserverHits++;
-
+  config.api.fileServerHits++;
   next();
 }
 
-export function middlewareErrorHandler(
+export function errorMiddleWare(
   err: Error,
-  req: Request,
+  _: Request,
   res: Response,
-  next: NextFunction
+  __: NextFunction
 ) {
   let statusCode = 500;
   let message = "Something went wrong on our end";
@@ -56,5 +56,9 @@ export function middlewareErrorHandler(
     message = err.message;
   }
 
-  res.status(statusCode).send({ error: message });
+  if (statusCode >= 500) {
+    console.log(err.message);
+  }
+
+  respondWithError(res, statusCode, message);
 }
