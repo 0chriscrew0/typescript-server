@@ -14,7 +14,7 @@ import {
 import { handlerValidateChirp } from "./api/validate_chirp.js";
 import { config } from "./config.js";
 import { createUser } from "./db/queries/users.js";
-import { createChirp } from "./db/queries/chirps.js";
+import { createChirp, getChirps } from "./db/queries/chirps.js";
 
 const migrationClient = postgres(config.db.url, { max: 1 });
 await migrate(drizzle(migrationClient), config.db.migrationConfig);
@@ -52,6 +52,14 @@ app.post("/api/chirps", (req, res, next) => {
       })
       .catch(next)
   );
+});
+
+app.get("/api/chirps", (req, res, next) => {
+  Promise.resolve(getChirps())
+    .then((chirps) => {
+      res.status(200).send(chirps);
+    })
+    .catch(next);
 });
 
 app.use(errorMiddleWare);
