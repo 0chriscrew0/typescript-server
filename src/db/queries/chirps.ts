@@ -1,6 +1,7 @@
 import { BadRequestError } from "../../api/errors.js";
 import { db } from "../index.js";
 import { NewChirp, chirps } from "../schema.js";
+import { eq } from "drizzle-orm";
 
 function validateAndCleanChirp(chirp: NewChirp) {
   const profane = ["kerfuffle", "sharbert", "fornax"];
@@ -34,4 +35,9 @@ export async function createChirp(chirp: NewChirp) {
 export async function getChirps() {
   const results = await db.select().from(chirps);
   return results;
+}
+
+export async function getChirp(id: string) {
+  const [result] = await db.select().from(chirps).where(eq(chirps.id, id));
+  return result;
 }
