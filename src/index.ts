@@ -10,11 +10,15 @@ import {
   errorMiddleWare,
   middlewareLogResponse,
   middlewareMetricsInc,
-} from "./middleware.js";
-import { handlerValidateChirp } from "./api/validate_chirp.js";
+} from "./api/middleware.js";
+import {
+  handlerChirpsCreate,
+  handlerChirpsGet,
+  handlerChirpsRetrieve,
+} from "./api/chirps.js";
 import { config } from "./config.js";
-import { createUser } from "./db/queries/users.js";
-import { createChirp, getChirp, getChirps } from "./db/queries/chirps.js";
+import { handlerUsersCreate } from "./api/users.js";
+import { handlerLogin } from "./api/auth.js";
 
 const migrationClient = postgres(config.db.url, { max: 1 });
 await migrate(drizzle(migrationClient), config.db.migrationConfig);
@@ -36,42 +40,22 @@ app.post("/admin/reset", (req, res, next) => {
   Promise.resolve(handlerReset(req, res)).catch(next);
 });
 
+app.post("/api/login", (req, res, next) => {
+  Promise.resolve(handlerLogin(req, res)).catch(next);
+});
+
 app.post("/api/users", (req, res, next) => {
-  Promise.resolve(createUser({ email: req.body.email }))
-    .then((newUser) => {
-      res.status(201).send(newUser);
-    })
-    .catch(next);
+  Promise.resolve(handlerUsersCreate(req, res)).catch(next);
 });
 
 app.post("/api/chirps", (req, res, next) => {
-  Promise.resolve(
-    createChirp({ body: req.body.body, userId: req.body.userId })
-      .then((newChirp) => {
-        res.status(201).send(newChirp);
-      })
-      .catch(next)
-  );
+  Promise.resolve(handlerChirpsCreate(req, res)).catch(next);
 });
-
 app.get("/api/chirps", (req, res, next) => {
-  Promise.resolve(getChirps())
-    .then((chirps) => {
-      res.status(200).send(chirps);
-    })
-    .catch(next);
+  Promise.resolve(handlerChirpsRetrieve(req, res)).catch(next);
 });
-
-app.get("/api/chirps/:id", (req, res, next) => {
-  Promise.resolve(getChirp(req.params.id))
-    .then((chirp) => {
-      if (chirp) {
-        res.status(200).send(chirp);
-      } else {
-        res.sendStatus(404);
-      }
-    })
-    .catch(next);
+app.get("/api/chirps/:chirpId", (req, res, next) => {
+  Promise.resolve(handlerChirpsGet(req, res)).catch(next);
 });
 
 app.use(errorMiddleWare);
