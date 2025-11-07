@@ -36,6 +36,13 @@
       "when": 1762474099896,
       "tag": "0004_public_wallow",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1762474646044,
+      "tag": "0005_certain_major_mapleleaf",
+      "breakpoints": true
     }
   ]
 }
